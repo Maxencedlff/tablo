@@ -2,7 +2,7 @@
 
 Tes factures et relevés PDF en Excel propre, sans ressaisie. **100% dans le navigateur.**
 
-**Live : https://tablo-app.vercel.app**
+**Live : https://tablo-ecru.vercel.app**
 
 ## Idée
 
