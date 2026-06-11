@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablo — Tes factures PDF en Excel propre, sans ressaisie</title>
+<meta name="description" content="Dépose tes factures et relevés PDF, Tablo en sort un tableau Excel propre en quelques secondes et mémorise tes fournisseurs récurrents. 100% dans ton navigateur.">
+<meta property="og:title" content="Tablo — PDF récurrents → Excel propre, sans ressaisie">
+<meta property="og:description" content="Tablo apprend tes fournisseurs et supprime la saisie mensuelle. Rien n'est uploadé.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231F6B4A'/><rect x='22' y='30' width='56' height='12' fill='%23fff'/><rect x='22' y='48' width='56' height='10' fill='%23cfe3d8'/><rect x='22' y='62' width='56' height='10' fill='%23cfe3d8'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAFAF7; --surf:#FFFFFF; --ink:#1A1A1A; --gray:#6B6F76;
+  --green:#1F6B4A; --green2:#185539; --soft:#EAF1ED; --err:#C24A2C;
+  --line:#E6E4DD; --line2:#D8D5CB;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'Spline Sans',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:'Spline Sans Mono',monospace;font-variant-numeric:tabular-nums}
+a{color:var(--green);text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+h1,h2,h3{letter-spacing:-.02em;line-height:1.1}
+
+header{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:20}
+header .wrap{display:flex;align-items:center;justify-content:space-between;padding:14px 22px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.2rem}
+.logo .mk{width:26px;height:26px;border-radius:7px;background:var(--green);display:grid;place-items:center}
+.logo .mk b{display:block;width:14px;height:2.5px;background:#fff;box-shadow:0 4px 0 #cfe3d8,0 8px 0 #cfe3d8}
+nav{display:flex;gap:24px;align-items:center;font-size:.92rem}
+nav a{color:var(--gray)} nav a:hover{color:var(--ink)}
+.btn{border:1px solid var(--green);background:var(--green);color:#fff;border-radius:8px;padding:10px 18px;font-family:inherit;font-size:.94rem;font-weight:600;cursor:pointer;transition:background .15s,transform .08s}
+.btn:hover{background:var(--green2)} .btn:active{transform:translateY(1px)}
+.btn.ghost{background:var(--surf);color:var(--ink);border-color:var(--line2)}
+.btn.ghost:hover{border-color:var(--gray);background:var(--paper)}
+.btn.sm{padding:7px 13px;font-size:.85rem;border-radius:7px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.hero{padding:60px 0 26px;text-align:center}
+.tag{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--surf);border-radius:99px;padding:5px 13px;font-size:.8rem;color:var(--gray);margin-bottom:20px}
+.tag .d{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.hero h1{font-size:clamp(2rem,5vw,3.1rem);max-width:16ch;margin:0 auto;font-weight:700}
+.hero h1 em{font-style:normal;color:var(--green)}
+.hero p.l{color:var(--gray);font-size:1.1rem;max-width:52ch;margin:18px auto 0}
+.priv{margin-top:18px;font-size:.86rem;color:var(--gray);display:inline-flex;gap:8px;align-items:center}
+
+/* app card */
+.app{background:var(--surf);border:1px solid var(--line);border-radius:14px;margin:26px 0;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 24px rgba(0,0,0,.04);overflow:hidden}
+.app-head{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--line);background:var(--paper)}
+.app-head .t{font-weight:600;font-size:.95rem;display:flex;align-items:center;gap:9px}
+.app-head .meta{font-size:.82rem;color:var(--gray);font-family:'Spline Sans Mono'}
+.dropzone{margin:22px;border:1.5px dashed var(--line2);border-radius:12px;background:var(--paper);padding:40px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.dropzone:hover,.dropzone.over{border-color:var(--green);background:var(--soft)}
+.dz-ic{width:46px;height:46px;margin:0 auto 12px;border-radius:11px;background:var(--soft);display:grid;place-items:center;font-size:1.4rem}
+.dz-t{font-weight:600;font-size:1.05rem}
+.dz-s{color:var(--gray);font-size:.88rem;margin-top:5px}
+.dz-row{margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.samplebtn{color:var(--green);font-weight:600;cursor:pointer;text-decoration:underline;font-size:.9rem}
+
+.proc{padding:16px 22px;display:none;align-items:center;gap:14px;border-top:1px solid var(--line);font-size:.9rem;color:var(--gray)}
+.proc .spin{width:18px;height:18px;border:2.5px solid var(--soft);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* grid / results */
+#results{display:none}
+.toolbar{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--paper)}
+.toolbar .count{font-size:.88rem;color:var(--gray);font-family:'Spline Sans Mono'}
+.toolbar .sp{flex:1}
+.grid-scroll{overflow-x:auto}
+table.grid{width:100%;border-collapse:collapse;font-size:.88rem;min-width:760px}
+table.grid th{background:var(--paper);text-align:left;padding:10px 12px;font-weight:600;color:var(--gray);font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
+table.grid td{padding:0;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+table.grid td:last-child{border-right:0}
+table.grid td input{width:100%;border:0;outline:0;padding:9px 12px;font-family:inherit;font-size:.88rem;background:transparent;color:var(--ink)}
+table.grid td.numcol input{font-family:'Spline Sans Mono';text-align:right}
+table.grid td input:focus{background:var(--soft);box-shadow:inset 0 0 0 2px var(--green)}
+table.grid tr.lowconf td.flagcell{position:relative}
+.flag{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--err);margin-right:6px;vertical-align:middle}
+table.grid td.src{font-family:'Spline Sans Mono';font-size:.78rem;color:var(--gray);padding:9px 12px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.vendor-pill{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;background:var(--soft);color:var(--green2);border-radius:5px;padding:2px 7px;margin-left:8px}
+.rowdel{background:none;border:0;color:var(--line2);cursor:pointer;font-size:1.1rem;padding:0 10px}
+.rowdel:hover{color:var(--err)}
+
+/* template prompt */
+.tpl-banner{display:none;margin:0;padding:11px 18px;background:var(--soft);border-bottom:1px solid var(--line);font-size:.88rem;color:var(--green2);align-items:center;gap:12px}
+.tpl-banner .sp{flex:1}
+
+/* paywall */
+.lockbar{display:none;align-items:center;gap:14px;padding:14px 18px;background:#FFF8F0;border-top:1px solid #F0E2CF;font-size:.9rem;color:#8a5a1f}
+.lockbar b{color:var(--ink)}
+.lockbar .sp{flex:1}
+
+/* sections */
+section.b{padding:60px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:600}
+section.b h2{font-size:1.7rem;margin-top:8px}
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+@media(max-width:720px){.feat{grid-template-columns:1fr}.feat3{grid-template-columns:1fr}}
+.fcard{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:22px}
+.fcard .i{width:38px;height:38px;border-radius:9px;background:var(--soft);display:grid;place-items:center;font-size:1.2rem;margin-bottom:12px}
+.fcard h3{font-size:1.02rem} .fcard p{color:var(--gray);font-size:.9rem;margin-top:6px}
+
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.plan{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column}
+.plan.feat3{border:2px solid var(--green);position:relative}
+.plan .rib{position:absolute;top:-11px;left:24px;background:var(--green);color:#fff;font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:6px}
+.plan .pn{font-weight:600;color:var(--gray)} .plan .pp{font-size:2rem;font-weight:700;margin:6px 0}
+.plan .pp small{font-size:.85rem;color:var(--gray);font-weight:400}
+.plan ul{list-style:none;margin:14px 0 18px;display:flex;flex-direction:column;gap:8px;font-size:.9rem;color:var(--gray);flex:1}
+.plan li{display:flex;gap:8px} .plan li::before{content:'✓';color:var(--green);font-weight:700}
+.plan .btn{width:100%;justify-content:center;text-align:center}
+@media(max-width:720px){.plans{grid-template-columns:1fr}}
+
+footer{border-top:1px solid var(--line);padding:30px 0;margin-top:30px;color:var(--gray);font-size:.86rem}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:9px;font-size:.88rem;display:none;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(26,26,26,.45);z-index:40;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surf);border-radius:14px;max-width:420px;width:100%;padding:26px}
+.modal h3{font-size:1.2rem} .modal p{color:var(--gray);font-size:.92rem;margin-top:8px}
+.modal .row{display:flex;gap:9px;margin-top:18px}
+.modal input{flex:1;border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font-family:inherit}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="logo"><span class="mk"><b></b></span>Tablo</div>
+  <nav>
+    <a href="#how">Comment ça marche</a>
+    <a href="#pricing">Tarifs</a>
+    <a href="#app" id="navTry" class="btn sm">Essayer</a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+
+  <div class="hero" id="app">
+    <div class="tag"><span class="d"></span> 100% dans ton navigateur · rien n'est uploadé</div>
+    <h1>Tes factures PDF en <em>Excel propre</em>, sans ressaisie.</h1>
+    <p class="l">Dépose tes factures et relevés. Tablo en sort un tableau structuré en quelques secondes, et <b>mémorise tes fournisseurs récurrents</b> pour que chaque mois prenne 10 secondes au lieu d'une heure.</p>
+    <p class="priv">🔒 Tes documents sont lus localement. Aucun upload, aucun serveur, aucun compte.</p>
+  </div>
+
+  <div class="app">
+    <div class="app-head">
+      <div class="t">📥 Dépose tes documents</div>
+      <div class="meta" id="quota"></div>
+    </div>
+    <div class="dropzone" id="dz">
+      <div class="dz-ic">📄</div>
+      <div class="dz-t">Glisse tes PDF ici, ou clique pour choisir</div>
+      <div class="dz-s">Factures, relevés, bons de commande · PDF à texte natif</div>
+      <div class="dz-row">
+        <span class="samplebtn" id="sampleBtn">Essayer avec 3 factures d'exemple →</span>
+      </div>
+      <input type="file" id="file" accept="application/pdf" multiple hidden>
+    </div>
+    <div class="proc" id="proc"><span class="spin"></span><span id="procText">Lecture…</span></div>
+
+    <div id="results">
+      <div class="tpl-banner" id="tplBanner">
+        <span id="tplText"></span><span class="sp"></span>
+        <button class="btn sm" id="tplSave">Mémoriser ce fournisseur</button>
+        <button class="btn ghost sm" id="tplDismiss">Plus tard</button>
+      </div>
+      <div class="toolbar">
+        <span class="count" id="rowCount"></span>
+        <span class="sp"></span>
+        <button class="btn ghost sm" id="addRow">+ Ligne</button>
+        <button class="btn ghost sm" id="csvBtn">Export CSV</button>
+        <button class="btn sm" id="xlsxBtn">Export Excel</button>
+      </div>
+      <div class="grid-scroll">
+        <table class="grid" id="grid"><thead></thead><tbody></tbody></table>
+      </div>
+      <div class="lockbar" id="lockbar">
+        <span>🔒 <b>Plan gratuit :</b> <span id="lockmsg"></span></span>
+        <span class="sp"></span>
+        <button class="btn sm" id="goPro">Passer en Pro · 9€/mois</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="b" id="how">
+    <div class="eyebrow">Comment ça marche</div>
+    <h2>Dépose. Vérifie. Exporte.</h2>
+    <div class="feat">
+      <div class="fcard"><div class="i">📄</div><h3>1. Dépose tes PDF</h3><p>Un ou cinquante. Tablo lit le texte de chaque document directement dans le navigateur, sans rien envoyer.</p></div>
+      <div class="fcard"><div class="i">✏️</div><h3>2. Vérifie la grille</h3><p>Fournisseur, date, HT, TVA, TTC remplis automatiquement. Une cellule douteuse est signalée, tu la corriges d'un clic.</p></div>
+      <div class="fcard"><div class="i">📊</div><h3>3. Exporte propre</h3><p>CSV ou Excel, prêt pour ta compta. Et Tablo retient tes fournisseurs : le mois prochain, c'est instantané.</p></div>
+    </div>
+  </section>
+
+  <section class="b">
+    <div class="eyebrow">Pourquoi Tablo et pas ChatGPT</div>
+    <h2>Parce que la corvée revient tous les mois.</h2>
+    <div class="feat">
+      <div class="fcard"><div class="i">🔁</div><h3>Tes modèles, mémorisés</h3><p>Coller un PDF dans un chat marche une fois. Tablo retient que « ce fournisseur va dans ces colonnes » et le rejoue sur chaque lot, sans réexpliquer.</p></div>
+      <div class="fcard"><div class="i">🗂️</div><h3>Par lots, fiable</h3><p>Glisse 30 factures hétérogènes, récupère un seul tableau cohérent. Reproductible, pas une réponse qui change à chaque fois.</p></div>
+      <div class="fcard"><div class="i">🔒</div><h3>Tes données restent chez toi</h3><p>Relevés bancaires, factures clients : rien ne part dans un chat public. Tout est traité dans ton navigateur.</p></div>
+    </div>
+  </section>
+
+  <section class="b" id="pricing">
+    <div class="eyebrow">Tarifs</div>
+    <h2>Commence gratuitement.</h2>
+    <div class="plans">
+      <div class="plan">
+        <div class="pn">Gratuit</div>
+        <div class="pp">0€</div>
+        <ul><li>3 documents par mois</li><li>Grille éditable</li><li>Export CSV</li><li>100% privé</li></ul>
+        <a class="btn ghost" href="#app">Essayer</a>
+      </div>
+      <div class="plan feat3">
+        <span class="rib">LE PLUS UTILE</span>
+        <div class="pn">Pro</div>
+        <div class="pp">9€ <small>/ mois</small></div>
+        <ul><li>Documents illimités, par lots</li><li><b>Fournisseurs mémorisés</b></li><li>Colonnes personnalisées</li><li>Export Excel + historique</li></ul>
+        <button class="btn" data-plan="pro" id="proPlanBtn">Passer en Pro</button>
+      </div>
+      <div class="plan">
+        <div class="pn">Pass ponctuel</div>
+        <div class="pp">4€</div>
+        <ul><li>50 documents en une fois</li><li>Sans abonnement</li><li>Export Excel</li><li>Pour un besoin occasionnel</li></ul>
+        <button class="btn ghost" data-plan="pass">Prendre le pass</button>
+      </div>
+    </div>
+    <p style="text-align:center;color:var(--gray);font-size:.84rem;margin-top:18px">Déjà payé ? <a id="redeemLink" href="#">Entrer ma clé</a></p>
+  </section>
+
+</main>
+
+<footer><div class="wrap">
+  <div><b style="color:var(--ink)">Tablo</b> · Tes PDF récurrents en Excel propre, sans ressaisie.</div>
+  <div>Traitement 100% local · <a href="#how">Comment ça marche</a></div>
+</div></footer>
+
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modalBg"><div class="modal">
+  <h3 id="mTitle"></h3><p id="mBody"></p>
+  <div class="row" id="mRow"></div>
+</div></div>
+
+<script type="module">
+import * as pdfjs from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs';
+import { FIELDS, extractInvoice, itemsToLines, vendorKey, fmtNum } from './extractor.js';
+pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+
+const $ = id => document.getElementById(id);
+const toast = m => { const t=$('toast'); t.textContent=m; t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',2400); };
+
+const PAY_LINKS = { pro:'https://buy.stripe.com/PLACEHOLDER_pro', pass:'https://buy.stripe.com/PLACEHOLDER_pass' };
+const FREE_LIMIT = 3;
+let isPro = localStorage.getItem('tablo_pro')==='1';
+let rows = [];            // enregistrements affichés
+let monthCount = loadMonthCount();
+
+/* ---------- quota mensuel (localStorage) ---------- */
+function ymKey(){ const d=new Date(); return 'tablo_q_'+d.getFullYear()+'_'+d.getMonth(); }
+function loadMonthCount(){ return parseInt(localStorage.getItem(ymKey())||'0',10); }
+function bumpMonth(n){ monthCount+=n; localStorage.setItem(ymKey(), String(monthCount)); renderQuota(); }
+function renderQuota(){
+  $('quota').textContent = isPro ? 'Pro · illimité' : `${Math.max(0,FREE_LIMIT-monthCount)} / ${FREE_LIMIT} documents ce mois`;
+}
+
+/* ---------- templates fournisseurs (IndexedDB via localStorage simple) ---------- */
+function loadTemplates(){ try{ return JSON.parse(localStorage.getItem('tablo_tpl')||'{}'); }catch{ return {}; } }
+function saveTemplate(rec){
+  const k = vendorKey(rec); if(!k) return;
+  const t = loadTemplates();
+  t[k] = { fournisseur:rec.fournisseur, savedAt:Date.now() };
+  localStorage.setItem('tablo_tpl', JSON.stringify(t));
+}
+function knownVendor(rec){ const k=vendorKey(rec); return k ? loadTemplates()[k] : null; }
+
+/* ---------- lecture PDF ---------- */
+async function readPdf(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data:buf }).promise;
+  let allItems=[], allText='';
+  for (let p=1;p<=pdf.numPages;p++){
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    const vh = page.getViewport({scale:1}).height;
+    for (const it of tc.items){
+      allItems.push({ str:it.str, x:it.transform[4], y:vh - it.transform[5] });
+    }
+    allText += tc.items.map(i=>i.str).join(' ')+'\n';
+  }
+  const lines = itemsToLines(allItems);
+  const rec = extractInvoice(allText, lines);
+  rec._file = file.name;
+  return rec;
+}
+
+/* ---------- pipeline ---------- */
+async function handleFiles(fileList){
+  const files = [...fileList].filter(f=>/pdf$/i.test(f.name) || f.type==='application/pdf');
+  if (!files.length){ toast('Dépose des fichiers PDF.'); return; }
+
+  // quota gratuit
+  let allowed = files;
+  let blocked = 0;
+  if (!isPro){
+    const remaining = Math.max(0, FREE_LIMIT - monthCount);
+    if (files.length > remaining){ allowed = files.slice(0, remaining); blocked = files.length - allowed.length; }
+  }
+  if (!allowed.length){ openPaywall(`Tu as utilisé tes ${FREE_LIMIT} documents gratuits ce mois.`); return; }
+
+  $('proc').style.display='flex';
+  $('results').style.display='none';
+  rows = [];
+  for (let i=0;i<allowed.length;i++){
+    $('procText').textContent = `Lecture ${i+1}/${allowed.length} · ${allowed[i].name}`;
+    try { rows.push(await readPdf(allowed[i])); }
+    catch(e){ rows.push({ _file:allowed[i].name, fournisseur:'(illisible)', _confidence:'low', _err:1 }); }
+  }
+  if (!isPro) bumpMonth(allowed.length);
+  $('proc').style.display='none';
+  renderGrid();
+  $('results').style.display='block';
+
+  // bannière template si fournisseur récurrent reconnu, sinon proposer de mémoriser le 1er
+  maybeOfferTemplate();
+
+  if (blocked>0){ showLock(`${blocked} document(s) non traités : limite de ${FREE_LIMIT}/mois atteinte. Passe en Pro pour le lot complet.`); }
+  else if (!isPro){ showLock(`Export Excel et mémorisation des fournisseurs réservés au plan Pro.`); }
+  else hideLock();
+
+  $('results').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ---------- grille éditable ---------- */
+function renderGrid(){
+  const thead = $('grid').querySelector('thead');
+  const tbody = $('grid').querySelector('tbody');
+  thead.innerHTML = '<tr>' + FIELDS.map(f=>`<th>${f.label}</th>`).join('') + '<th>Source</th><th></th></tr>';
+  tbody.innerHTML = '';
+  rows.forEach((r,ri)=>{
+    const tr = document.createElement('tr');
+    if (r._confidence==='low') tr.className='lowconf';
+    tr.innerHTML = FIELDS.map((f,ci)=>{
+      const isNum = ['ht','tva','ttc'].includes(f.key);
+      const flag = (ci===0 && r._confidence==='low') ? '<span class="flag" title="Vérifie cette ligne"></span>' : '';
+      const cls = (isNum?'numcol ':'') + (ci===0?'flagcell':'');
+      return `<td class="${cls}">${flag}<input data-r="${ri}" data-k="${f.key}" value="${(r[f.key]||'').replace(/"/g,'&quot;')}"></td>`;
+    }).join('') + `<td class="src" title="${r._file||''}">${r._file||''}</td>`
+      + `<td><button class="rowdel" data-del="${ri}">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+  $('rowCount').textContent = `${rows.length} ligne${rows.length>1?'s':''}`;
+  tbody.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',e=>{
+    rows[+e.target.dataset.r][e.target.dataset.k]=e.target.value;
+  }));
+  tbody.querySelectorAll('.rowdel').forEach(b=>b.addEventListener('click',e=>{
+    rows.splice(+e.target.dataset.del,1); renderGrid();
+  }));
+}
+
+/* ---------- template banner ---------- */
+let pendingVendor = null;
+function maybeOfferTemplate(){
+  const banner=$('tplBanner');
+  const first = rows.find(r=>r.fournisseur && r.fournisseur!=='(illisible)');
+  if (!first){ banner.style.display='none'; return; }
+  const known = knownVendor(first);
+  if (known){
+    banner.style.display='flex';
+    $('tplText').innerHTML = `🔁 Fournisseur reconnu : <b>${first.fournisseur}</b>. Modèle appliqué automatiquement.`;
+    $('tplSave').style.display='none'; $('tplDismiss').textContent='OK';
+    pendingVendor=null;
+  } else {
+    banner.style.display='flex';
+    $('tplText').innerHTML = `Mémoriser <b>${first.fournisseur}</b> comme fournisseur récurrent ? Le mois prochain, Tablo le reconnaîtra.`;
+    $('tplSave').style.display=''; $('tplDismiss').textContent='Plus tard';
+    pendingVendor = first;
+  }
+}
+$('tplSave').addEventListener('click',()=>{
+  if (!isPro){ openPaywall('La mémorisation des fournisseurs est une fonction Pro.'); return; }
+  if (pendingVendor){ saveTemplate(pendingVendor); toast('Fournisseur mémorisé.'); $('tplBanner').style.display='none'; }
+});
+$('tplDismiss').addEventListener('click',()=>$('tplBanner').style.display='none');
+
+/* ---------- lock bar ---------- */
+function showLock(msg){ $('lockmsg').textContent=msg; $('lockbar').style.display='flex'; }
+function hideLock(){ $('lockbar').style.display='none'; }
+$('goPro').addEventListener('click',()=>openPaywall());
+
+/* ---------- exports ---------- */
+function toCSV(){
+  const head = FIELDS.map(f=>f.label).join(';');
+  const body = rows.map(r=>FIELDS.map(f=>`"${(r[f.key]||'').replace(/"/g,'""')}"`).join(';')).join('\n');
+  return head+'\n'+body;
+}
+$('csvBtn').addEventListener('click',()=>{
+  const blob=new Blob(['﻿'+toCSV()],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tablo-export.csv'; a.click();
+  toast('CSV exporté.');
+});
+$('xlsxBtn').addEventListener('click',async ()=>{
+  if (!isPro){ openPaywall('L\'export Excel est une fonction Pro.'); return; }
+  if (!window.XLSX) await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/package/xlsx.mjs').then(m=>window.XLSX=m).catch(async()=>{
+    await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'); });
+  const XLSX = window.XLSX;
+  const data = rows.map(r=>{ const o={}; FIELDS.forEach(f=>o[f.label]=r[f.key]||''); return o; });
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Factures');
+  XLSX.writeFile(wb,'tablo-export.xlsx');
+  toast('Excel exporté.');
+});
+$('addRow').addEventListener('click',()=>{ rows.push({_file:'(manuel)',_confidence:'high'}); renderGrid(); });
+
+/* ---------- paywall modal ---------- */
+function openPaywall(reason){
+  $('mTitle').textContent = 'Passer en Pro';
+  $('mBody').textContent = (reason? reason+' ' : '') + 'Pro : documents illimités par lots, fournisseurs mémorisés, export Excel. 9€/mois, sans engagement.';
+  $('mRow').innerHTML = '<button class="btn" style="flex:1" data-plan="pro">Passer en Pro · 9€</button>';
+  $('mRow').querySelector('[data-plan]').addEventListener('click',()=>checkout('pro'));
+  $('modalBg').style.display='flex';
+}
+function openRedeem(){
+  $('mTitle').textContent='Entrer ma clé';
+  $('mBody').textContent='Colle la clé reçue après ton paiement.';
+  $('mRow').innerHTML='<input id="keyIn" placeholder="TABLO-..."><button class="btn" id="okKey">OK</button>';
+  $('okKey').addEventListener('click',()=>{
+    const k=$('keyIn').value.trim().toUpperCase();
+    if (k.startsWith('TABLO-')&&k.length>=8){ isPro=true; localStorage.setItem('tablo_pro','1'); renderQuota(); hideLock(); $('modalBg').style.display='none'; toast('Pro activé. Merci !'); }
+    else toast('Clé invalide.');
+  });
+  $('modalBg').style.display='flex';
+}
+function checkout(plan){
+  const link = PAY_LINKS[plan];
+  if (link && !link.includes('PLACEHOLDER')){ window.location.href=link; return; }
+  // démo : génère une clé locale
+  const key='TABLO-'+Math.abs([...plan].reduce((a,c)=>a*31+c.charCodeAt(0),7)).toString(36).toUpperCase();
+  $('modalBg').style.display='none';
+  toast('Démo : ta clé Pro est '+key);
+  setTimeout(()=>{ isPro=true; localStorage.setItem('tablo_pro','1'); renderQuota(); hideLock(); toast('Pro activé (démo).'); },1600);
+}
+document.querySelectorAll('[data-plan]').forEach(b=>b.addEventListener('click',()=>checkout(b.dataset.plan)));
+$('redeemLink').addEventListener('click',e=>{e.preventDefault();openRedeem();});
+$('modalBg').addEventListener('click',e=>{ if(e.target===$('modalBg')) $('modalBg').style.display='none'; });
+
+/* ---------- inputs ---------- */
+const dz=$('dz');
+dz.addEventListener('click',()=>$('file').click());
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');handleFiles(e.dataTransfer.files);});
+$('file').addEventListener('change',()=>handleFiles($('file').files));
+
+$('sampleBtn').addEventListener('click',async ()=>{
+  $('sampleBtn').textContent='Chargement…';
+  try{
+    const names=['facture-cafe-richard.pdf','facture-amazon-payout.pdf','facture-ovh.pdf'];
+    const files=await Promise.all(names.map(async n=>{
+      const r=await fetch('samples/'+n); const b=await r.blob(); return new File([b],n,{type:'application/pdf'});
+    }));
+    // l'exemple ne consomme pas le quota
+    const wasPro=isPro; isPro=true; await handleFiles(files); isPro=wasPro; renderQuota();
+  }catch(e){ toast('Impossible de charger les exemples.'); }
+  finally{ $('sampleBtn').textContent='Essayer avec 3 factures d\'exemple →'; }
+});
+
+renderQuota();
+window.__tablo={ready:true};
+</script>
+</body>
+</html>
